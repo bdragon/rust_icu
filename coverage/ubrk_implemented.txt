@@ -1,0 +1,14 @@
+ubrk_first
+ubrk_following
+ubrk_getBinaryRules
+ubrk_getRuleStatus
+ubrk_getRuleStatusVec
+ubrk_isBoundary
+ubrk_last
+ubrk_next
+ubrk_open
+ubrk_openBinaryRules
+ubrk_openRules
+ubrk_preceding
+ubrk_safeClone
+ubrk_setText

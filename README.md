@@ -64,6 +64,7 @@ coverage in the headers.
 | [rust_icu_ustring](https://crates.io/crates/rust_icu_ustring)| ICU strings. Implements [`ustring.h`]() C API header from the ICU library. |
 | [rust_icu_utext](https://crates.io/crates/rust_icu_utext)| Text operations. Implements [`utext.h`](https://unicode-org.github.io/icu-docs/apidoc/released/icu4c/utext_8h.html) C API header from the ICU library. |
 | [rust_icu_utrans](https://crates.io/crates/rust_icu_utrans)| Transliteration support. Implements [`utrans.h`](https://unicode-org.github.io/icu-docs/apidoc/released/icu4c/utrans_8h.html) C API header from the ICU library. |
+| [rust_icu_ubrk](https://crates.io/crates/rust_icu_ubrk)| Support for text boundary analysis. Implements [`ubrk.h`](https://unicode-org.github.io/icu-docs/apidoc/released/icu4c/ubrk_8h.html) C API header from the ICU library. |
 
 # Limitations
 
