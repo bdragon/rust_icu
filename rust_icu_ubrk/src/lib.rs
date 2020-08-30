@@ -17,7 +17,7 @@
 use {
     rust_icu_common::{self as common, simple_drop_impl},
     rust_icu_sys::{self as sys, *},
-    rust_icu_ustring as ustring,
+    rust_icu_ustring as ustring, rust_icu_utext as utext,
     std::{convert::TryFrom, ffi, os::raw, ptr},
 };
 
@@ -219,6 +219,20 @@ impl UBreakIterator {
         }
         common::Error::ok_or_warning(status)?;
         Ok(())
+    }
+
+    /// Immplements `ubrk_setUText`.
+    pub fn set_utext(&self, text: &mut utext::Text) -> Result<(), common::Error> {
+        let mut status = common::Error::OK_CODE;
+        unsafe {
+            assert!(common::Error::is_ok(status));
+            versioned_function!(ubrk_setUText)(
+                self.rep.as_ptr(),
+                text.as_mut_c_ptr(),
+                &mut status,
+            );
+        }
+        common::Error::ok_or_warning(status)
     }
 
     /// Implements `ubrk_first`.

@@ -99,6 +99,20 @@ impl Text {
         common::Error::ok_or_warning(status)?;
         Ok(Text { rep })
     }
+
+    /// Returns a constant pointer to the underlying C representation.
+    /// Intended for use in low-level code.
+    pub fn as_c_ptr(&self) -> *const sys::UText {
+        self.rep
+    }
+
+    /// Returns an unsafe mutable pointer to the underlying C representation.
+    /// Caller must ensure that this `Text` outlives the returned pointer,
+    /// or else it will end up pointing to garbage. Intended for use in
+    /// low-level code that requires it.
+    pub fn as_mut_c_ptr(&mut self) -> *mut sys::UText {
+        self.rep
+    }
 }
 
 impl Drop for Text {
