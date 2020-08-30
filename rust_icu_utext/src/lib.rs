@@ -13,28 +13,29 @@
 // limitations under the License.
 
 use {
-    rust_icu_common as common, rust_icu_sys as sys, rust_icu_sys::versioned_function,
-    rust_icu_sys::*, std::cmp::Eq, std::convert::TryFrom, std::os::raw,
+    rust_icu_common::{self as common, simple_drop_impl}, rust_icu_sys::{self as sys, *},
+    std::{cmp::Eq, convert::TryFrom, os::raw, ptr}
 };
 
-#[derive(Debug)]
+#[derive(Debug, Eq)]
 pub struct Text {
-    // rep is allocated by the underlying library and has to be dropped using `utext_close`.
-    rep: *mut UText,
+    rep: ptr::NonNull<sys::UText>,
 }
 
+simple_drop_impl!(Text, utext_close);
+
 impl PartialEq for Text {
+    /// Implements `utext_equals`.
     fn eq(&self, other: &Self) -> bool {
-        let ret = unsafe { versioned_function!(utext_equals)(self.rep, other.rep) };
-        match ret {
-            0 => false,
-            1 => true,
-            // Could be a bug in the underlying library.
-            _ => panic!("value is not convertible to bool in Text::eq: {}", ret),
-        }
+        let result: sys::UBool = unsafe {
+            versioned_function!(utext_equals)(
+                self.rep.as_ptr(),
+                other.rep.as_ptr(),
+            )
+        };
+        result != 0
     }
 }
-impl Eq for Text {}
 
 impl TryFrom<String> for Text {
     type Error = common::Error;
@@ -54,6 +55,7 @@ impl TryFrom<String> for Text {
 
 impl TryFrom<&str> for Text {
     type Error = common::Error;
+
     /// Implements `utext_open`
     fn try_from(s: &str) -> Result<Self, Self::Error> {
         let len = s.len() as i64;
@@ -72,9 +74,13 @@ impl Text {
     unsafe fn from_raw_bytes(buffer: *const raw::c_char, len: i64) -> Result<Self, common::Error> {
         let mut status = common::Error::OK_CODE;
         // Requires that 'bytes' is a valid pointer and len is the correct length of 'bytes'.
-        let rep = versioned_function!(utext_openUTF8)(0 as *mut UText, buffer, len, &mut status);
+        let rep = versioned_function!(utext_openUTF8)(
+            0 as *mut sys::UText,
+            buffer,
+            len, &mut status
+        );
         common::Error::ok_or_warning(status)?;
-        Ok(Text { rep })
+        Ok(Text { rep: ptr::NonNull::new(rep).unwrap() })
     }
 
     /// Tries to produce a clone of this Text.
@@ -89,21 +95,21 @@ impl Text {
         let rep = unsafe {
             assert!(common::Error::is_ok(status));
             versioned_function!(utext_clone)(
-                0 as *mut UText,
-                self.rep,
+                0 as *mut sys::UText,
+                self.rep.as_ptr(),
                 deep as sys::UBool,
                 readonly as sys::UBool,
                 &mut status,
             )
         };
         common::Error::ok_or_warning(status)?;
-        Ok(Text { rep })
+        Ok(Text { rep: ptr::NonNull::new(rep).unwrap() })
     }
 
     /// Returns a constant pointer to the underlying C representation.
     /// Intended for use in low-level code.
     pub fn as_c_ptr(&self) -> *const sys::UText {
-        self.rep
+        self.rep.as_ptr()
     }
 
     /// Returns an unsafe mutable pointer to the underlying C representation.
@@ -111,17 +117,7 @@ impl Text {
     /// or else it will end up pointing to garbage. Intended for use in
     /// low-level code that requires it.
     pub fn as_mut_c_ptr(&mut self) -> *mut sys::UText {
-        self.rep
-    }
-}
-
-impl Drop for Text {
-    /// Implements `utext_close` from ICU4C.
-    fn drop(&mut self) {
-        // Requires that self.rep is a valid pointer.
-        unsafe {
-            versioned_function!(utext_close)(self.rep);
-        }
+        self.rep.as_ptr()
     }
 }
 
@@ -138,15 +134,24 @@ mod test {
 
         // Should all be equal to themselves.
         assert_eq!(1i8, unsafe {
-            versioned_function!(utext_equals)(foo.rep, foo.rep)
+            versioned_function!(utext_equals)(
+                foo.rep.as_ptr(),
+                foo.rep.as_ptr(),
+            )
         });
         assert_eq!(1i8, unsafe {
-            versioned_function!(utext_equals)(bar.rep, bar.rep)
+            versioned_function!(utext_equals)(
+                bar.rep.as_ptr(),
+                bar.rep.as_ptr(),
+            )
         });
 
         // Should not be equal since not the same text and position.
         assert_ne!(1i8, unsafe {
-            versioned_function!(utext_equals)(foo.rep, bar.rep)
+            versioned_function!(utext_equals)(
+                foo.rep.as_ptr(),
+                bar.rep.as_ptr(),
+            )
         });
 
         assert_ne!(foo, bar);

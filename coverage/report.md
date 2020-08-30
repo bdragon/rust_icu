@@ -480,12 +480,12 @@
 | Unimplemented | Implemented |
 | ------------- | ----------- |
 | | `utext_clone` |
-| | `utext_close` |
+| | `utext_equals` |
 | | `utext_open` |
 | `utext_char32At` | |
+| `utext_close` | |
 | `utext_copy` | |
 | `utext_current32` | |
-| `utext_equals` | |
 | `utext_extract` | |
 | `utext_freeze` | |
 | `utext_getNativeIndex` | |
