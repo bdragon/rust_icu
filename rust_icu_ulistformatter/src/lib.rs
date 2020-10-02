@@ -95,7 +95,7 @@ impl UListFormatter {
     /// Implements `ulistfmt_format`.
     pub fn format(&self, list: &[&str]) -> Result<String, common::Error> {
         let result = self.format_uchar(list)?;
-        String::try_from(&result)
+        String::try_from(&result).map_err(|e| e.into())
     }
 
     /// Implements `ulistfmt_format`.
@@ -179,7 +179,7 @@ where
     fn try_from(list: &[T]) -> Result<Self, Self::Error> {
         let mut elements: Vec<ustring::UChar> = Vec::with_capacity(list.len());
         for element in list {
-            let uchar = ustring::UChar::try_from(element.as_ref())?;
+            let uchar = ustring::UChar::from(element.as_ref());
             elements.push(uchar);
         }
         let pointers = elements.iter().map(|e| e.as_c_ptr()).collect();

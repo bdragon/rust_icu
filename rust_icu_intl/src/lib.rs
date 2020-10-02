@@ -55,7 +55,6 @@
 use rust_icu_uloc as uloc;
 use rust_icu_umsg::{self as umsg, message_format};
 use rust_icu_ustring as ustring;
-use std::convert::TryFrom;
 
 /// Implements ECMA-402 `Intl.PluralRules` based on the ICU locale data.
 pub struct PluralRules {
@@ -75,7 +74,7 @@ other {other}}"#;
 impl PluralRules {
     /// Creates a new plural rules formatter.
     pub fn new(locale: &uloc::ULoc) -> PluralRules {
-        let pattern = ustring::UChar::try_from(RESPONSES).expect("pattern should never fail");
+        let pattern = ustring::UChar::from(RESPONSES);
         let formatter = umsg::UMessageFormat::try_from(&pattern, &locale)
             .expect("this formatter should never fail");
         PluralRules { formatter }
@@ -101,6 +100,7 @@ impl PluralRules {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::convert::TryFrom;
 
     // Checks the rule and prints useful diagnostic messages in case of failure.
     fn check_rule(expected: &str, n: f64, rules: &PluralRules) {

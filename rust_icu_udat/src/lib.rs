@@ -86,7 +86,7 @@ impl UDateFormat {
             "programmer error: date_style may not be UDAT_PATTERN"
         );
         // pattern is ignored if time_style or date_style aren't equal to pattern.
-        let pattern = ustring::UChar::try_from("").expect("pattern created");
+        let pattern = ustring::UChar::from("");
 
         Self::new_internal(time_style, date_style, loc, tz_id, &pattern)
     }
@@ -158,7 +158,7 @@ impl UDateFormat {
     ///
     /// Implements `udat_parse`
     pub fn parse(&self, datetime: &str) -> Result<sys::UDate, common::Error> {
-        let datetime_uc = ustring::UChar::try_from(datetime)?;
+        let datetime_uc = ustring::UChar::from(datetime);
         self.parse_from_position(&datetime_uc, 0).map(|r| r.date)
     }
 
@@ -243,7 +243,7 @@ impl UDateFormat {
             };
             common::Error::ok_or_warning(status)?;
         }
-        String::try_from(&result)
+        String::try_from(&result).map_err(|e| e.into())
     }
 }
 
@@ -340,7 +340,7 @@ mod tests {
         ];
         for t in tests {
             let loc = uloc::ULoc::try_from(t.locale)?;
-            let tz_id = ustring::UChar::try_from(t.timezone)?;
+            let tz_id = ustring::UChar::from(t.timezone);
 
             let mut fmt = UDateFormat::new_with_styles(
                 sys::UDateFormatStyle::UDAT_FULL,
@@ -385,9 +385,9 @@ mod tests {
             },
         ];
         let loc = uloc::ULoc::try_from("en-US")?;
-        let tz_id = ustring::UChar::try_from("America/New_York")?;
+        let tz_id = ustring::UChar::from("America/New_York");
         for t in tests {
-            let pattern = ustring::UChar::try_from(t.pattern)?;
+            let pattern = ustring::UChar::from(t.pattern);
             let fmt = UDateFormat::new_with_pattern(&loc, &tz_id, &pattern)?;
             let actual = fmt.format(t.date)?;
             assert_eq!(
@@ -422,10 +422,10 @@ mod tests {
         ];
 
         let loc = uloc::ULoc::try_from("en-US")?;
-        let tz_id = ustring::UChar::try_from("America/New_York")?;
+        let tz_id = ustring::UChar::from("America/New_York");
 
         for test in tests {
-            let pattern = ustring::UChar::try_from(test.pattern)?;
+            let pattern = ustring::UChar::from(test.pattern);
             let format = UDateFormat::new_with_pattern(&loc, &tz_id, &pattern)?;
             let actual = format.parse(test.input)?;
             assert_eq!(

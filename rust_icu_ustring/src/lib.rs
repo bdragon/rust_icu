@@ -19,8 +19,8 @@
 //!
 
 use {
-    log::trace, rust_icu_common as common, rust_icu_sys as sys, rust_icu_sys::*,
-    std::convert::TryFrom, std::os::raw,
+    rust_icu_sys as sys,
+    std::{convert::TryFrom, string::FromUtf16Error},
 };
 
 /// The implementation of the ICU `UChar*`.
@@ -29,13 +29,13 @@ use {
 /// `UChar*` are in fact here.
 ///
 /// The first thing you probably want to do is to start from a UTF-8 rust string, produce a UChar.
-/// This is necessarily done with a conversion.  See the `TryFrom` implementations in this crate
-/// for that.
+/// This is necessarily done with a conversion.  See the `From` and `TryFrom` implementations
+/// in this crate for that.
 ///
 /// Implements `UChar*` from ICU.
 #[derive(Debug, Clone)]
 pub struct UChar {
-    rep: Vec<rust_icu_sys::UChar>,
+    rep: Vec<sys::UChar>,
 }
 
 /// Same as `rust_icu_common::buffered_string_method_with_retry`, but for unicode strings.
@@ -136,147 +136,52 @@ macro_rules! buffered_uchar_method_with_retry {
     }
 }
 
-impl TryFrom<&str> for crate::UChar {
-    type Error = common::Error;
-
+impl From<&str> for UChar {
     /// Tries to produce a string from the UTF-8 encoded thing.
     ///
-    /// This conversion ignores warnings (e.g. warnings about unterminated buffers), since for rust
-    /// they are not relevant.
-    ///
-    /// Implements `u_strFromUTF8`.
-    fn try_from(rust_string: &str) -> Result<Self, Self::Error> {
-        let mut status = common::Error::OK_CODE;
-        let mut dest_length: i32 = 0;
-        // Preflight to see how long the buffer should be. See second call below
-        // for safety notes.
-        //
-        // TODO(fmil): Consider having a try_from variant which allocates a buffer
-        // of sufficient size instead of running the algorithm twice.
-        trace!("utf8->UChar*: {}, {:?}", rust_string.len(), rust_string);
-        // Requires that rust_string be a valid C string.
-        unsafe {
-            assert!(common::Error::is_ok(status));
-            versioned_function!(u_strFromUTF8)(
-                0 as *mut sys::UChar,
-                0,
-                &mut dest_length,
-                rust_string.as_ptr() as *const raw::c_char,
-                rust_string.len() as i32,
-                &mut status,
-            );
+    /// Performs conversion in Rust rather than crossing FFI boundary to call `u_strFromUTF8`.
+    fn from(s: &str) -> Self {
+        Self {
+            rep: s.encode_utf16().collect()
         }
-        trace!("before error check");
-        // We expect buffer overflow error here.  The API is weird, but there you go.
-        common::Error::ok_preflight(status)?;
-        trace!("input  utf8->UChar*: {:?}", rust_string);
-        let mut rep: Vec<sys::UChar> = vec![0; dest_length as usize];
-        let mut status = common::Error::OK_CODE;
-        // Assumes that rust_string contains a valid rust string.  It is OK for the string to have
-        // embedded zero bytes.  Assumes that 'rep' is large enough to hold the entire result.
-        unsafe {
-            assert!(common::Error::is_ok(status));
-            versioned_function!(u_strFromUTF8)(
-                rep.as_mut_ptr(),
-                rep.len() as i32,
-                &mut dest_length,
-                rust_string.as_ptr() as *const raw::c_char,
-                rust_string.len() as i32,
-                &mut status,
-            );
-        }
-        common::Error::ok_or_warning(status)?;
-        trace!("result utf8->uchar*[{}]: {:?}", dest_length, rep);
-        Ok(crate::UChar { rep })
     }
 }
 
 impl TryFrom<&UChar> for String {
-    type Error = common::Error;
+    type Error = FromUtf16Error;
 
     /// Tries to produce a UTF-8 encoded rust string from a UChar.
     ///
-    /// This conversion ignores warnings and only reports actual ICU errors when
-    /// they happen.
-    ///
-    /// Implements `u_strToUTF8`.
+    /// Attempts conversion in Rust rather than crossing the FFI boundary to call `u_strToUTF8`.
     fn try_from(u: &UChar) -> Result<String, Self::Error> {
-        let mut status = common::Error::OK_CODE;
-        let mut dest_length: i32 = 0;
-        // First probe for required destination length.
-        unsafe {
-            assert!(common::Error::is_ok(status));
-            versioned_function!(u_strToUTF8)(
-                0 as *mut raw::c_char,
-                0,
-                &mut dest_length,
-                u.rep.as_ptr(),
-                u.rep.len() as i32,
-                &mut status,
-            );
-        }
-        trace!("preflight UChar*->utf8 buf[{}]", dest_length);
-
-        // The API doesn't really document this well, but the preflight code will report buffer
-        // overflow error even when we are explicitly just trying to check for the size of the
-        // resulting buffer.
-        common::Error::ok_preflight(status)?;
-
-        // Buffer to store the converted string.
-        let mut buf: Vec<u8> = vec![0; dest_length as usize];
-        trace!("pre:  result UChar*->utf8 buf[{}]: {:?}", buf.len(), buf);
-        let mut status = common::Error::OK_CODE;
-
-        // Requires that buf is a buffer with enough capacity to store the
-        // resulting string.
-        unsafe {
-            assert!(common::Error::is_ok(status));
-            versioned_function!(u_strToUTF8)(
-                buf.as_mut_ptr() as *mut raw::c_char,
-                buf.len() as i32,
-                &mut dest_length,
-                u.rep.as_ptr(),
-                u.rep.len() as i32,
-                &mut status,
-            );
-        }
-        trace!("post: result UChar*->utf8 buf[{}]: {:?}", buf.len(), buf);
-        common::Error::ok_or_warning(status)?;
-        let s = String::from_utf8(buf);
-        match s {
-            Err(e) => Err(e.into()),
-            Ok(x) => {
-                trace!("result UChar*->utf8: {:?}", x);
-                Ok(x)
-            }
-        }
+        String::from_utf16(&u.rep[..])
     }
 }
 
-impl From<Vec<sys::UChar>> for crate::UChar {
+impl From<Vec<sys::UChar>> for UChar {
     /// Adopts a vector of [sys::UChar] into a string.
-    fn from(rep: Vec<sys::UChar>) -> crate::UChar {
-        crate::UChar { rep }
+    fn from(rep: Vec<sys::UChar>) -> UChar {
+        UChar { rep }
     }
 }
 
-impl crate::UChar {
+impl UChar {
     /// Allocates a new UChar with given capacity.
     ///
     /// Capacity and size must always be the same with `UChar` when used for interacting with
     /// low-level code.
-    pub fn new_with_capacity(capacity: usize) -> crate::UChar {
+    pub fn new_with_capacity(capacity: usize) -> UChar {
         let rep: Vec<sys::UChar> = vec![0; capacity];
-        crate::UChar::from(rep)
+        UChar::from(rep)
     }
 
-    /// Creates a new [crate::UChar] from its low-level representation, a buffer
+    /// Creates a new [UChar] from its low-level representation, a buffer
     /// pointer and a buffer size.
     ///
     /// Does *not* take ownership of the buffer that was passed in.
     ///
     /// **DO NOT USE UNLESS YOU HAVE NO OTHER CHOICE.**
-    pub unsafe fn clone_from_raw_parts(rep: *mut sys::UChar, len: i32) -> crate::UChar {
+    pub unsafe fn clone_from_raw_parts(rep: *mut sys::UChar, len: i32) -> UChar {
         assert!(len >= 0);
         // Always works for len: i32 >= 0.
         let cap = len as usize;
@@ -287,7 +192,7 @@ impl crate::UChar {
         let copy = original.clone();
         // Don't free the buffer we don't own.
         std::mem::forget(original);
-        crate::UChar::from(copy)
+        UChar::from(copy)
     }
 
     /// Converts into a zeroed-out string.
@@ -322,7 +227,6 @@ impl crate::UChar {
     pub fn resize(&mut self, new_size: usize) {
         self.rep.resize(new_size, 0);
     }
-
 }
 
 #[cfg(test)]
@@ -333,8 +237,7 @@ mod tests {
     fn round_trip_conversion() {
         let samples = vec!["", "Hello world!", "❤  Hello world  ❤"];
         for s in samples.iter() {
-            let uchar =
-                crate::UChar::try_from(*s).expect(&format!("forward conversion succeeds: {}", s));
+            let uchar = UChar::from(*s);
             let res =
                 String::try_from(&uchar).expect(&format!("back conversion succeeds: {:?}", uchar));
             assert_eq!(*s, res);

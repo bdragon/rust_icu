@@ -146,6 +146,12 @@ impl From<std::string::FromUtf8Error> for Error {
     }
 }
 
+impl From<std::string::FromUtf16Error> for Error {
+    fn from(e: std::string::FromUtf16Error) -> Self {
+        Self::wrapper(e)
+    }
+}
+
 impl Into<std::fmt::Error> for Error {
     fn into(self) -> std::fmt::Error {
         // It is not possible to transfer any info into std::fmt::Error, so we log instead.
@@ -333,7 +339,7 @@ macro_rules! format_ustring_for_type{
             let result = paste::item! {
                 self. [< $method_name _ustring>] (number)?
             };
-            String::try_from(&result)
+            String::try_from(&result).map_err(|e| e.into())
         }
 
         // Should be able to use https://github.com/google/rust_icu/pull/144 to

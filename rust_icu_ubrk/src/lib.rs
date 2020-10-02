@@ -163,7 +163,7 @@ impl UBreakIterator {
         locale: &str,
         text: &str,
     ) -> Result<Self, common::Error> {
-        let text = ustring::UChar::try_from(text)?;
+        let text = ustring::UChar::from(text);
         let locale = uloc::ULoc::try_from(locale)?;
         Self::try_new_ustring(type_, &locale, &text)
     }
@@ -209,8 +209,8 @@ impl UBreakIterator {
         rules: &str,
         text: &str,
     ) -> Result<Self, common::Error> {
-        let rules = ustring::UChar::try_from(rules)?;
-        let text = ustring::UChar::try_from(text)?;
+        let rules = ustring::UChar::from(rules);
+        let text = ustring::UChar::from(text);
         Self::try_new_rules_ustring(&rules, &text)
     }
 
@@ -258,7 +258,7 @@ impl UBreakIterator {
         rules: &Vec<u8>,
         text: &str,
     ) -> Result<Self, common::Error> {
-        let text = ustring::UChar::try_from(text)?;
+        let text = ustring::UChar::from(text);
         Self::try_new_binary_rules_ustring(rules, &text)
     }
 
@@ -364,7 +364,7 @@ impl UBreakIterator {
     ///
     /// Implements `ubrk_setText`.
     pub fn set_text(&mut self, text: &str) -> Result<(), common::Error> {
-        let text = ustring::UChar::try_from(text)?;
+        let text = ustring::UChar::from(text);
         self.set_text_ustring(&text)
     }
 

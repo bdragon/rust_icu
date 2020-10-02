@@ -42,54 +42,56 @@
 //! use rust_icu_common as common;
 //! use rust_icu_ustring as ustring;
 //! use rust_icu_uloc as uloc;
-//! use rust_icu_umsg::{self as umsg, message_format};
+//! use rust_icu_umsg as umsg;
 //! # use rust_icu_ucal as ucal;
 //! # use std::convert::TryFrom;
 //! #
 //! # struct TzSave(String);
+//! #
 //! # impl Drop for TzSave {
-//! #    fn drop(&mut self) {
-//! #        ucal::set_default_time_zone(&self.0);
-//! #    }
+//! #     // Restore the system time zone upon exit.
+//! #     fn drop(&mut self) {
+//! #         ucal::set_default_time_zone(&self.0);
+//! #     }
 //! # }
 //!
 //! fn testfn() -> Result<(), common::Error> {
 //! #   let _ = TzSave(ucal::get_default_time_zone()?);
 //! #   ucal::set_default_time_zone("Europe/Amsterdam")?;
 //!     let loc = uloc::ULoc::try_from("en-US-u-tz-uslax")?;
-//!     let msg = ustring::UChar::try_from(
-//!       r"Formatted double: {0,number,##.#},
-//!         Formatted integer: {1,number,integer},
-//!         Formatted string: {2},
-//!         Date: {3,date,full}",
-//!     )?;
+//!     let msg = ustring::UChar::from(
+//!         r"Formatted double: {0,number,##.#},
+//!           Formatted integer: {1,number,integer},
+//!           Formatted string: {2},
+//!           Date: {3,date,full}",
+//!     );
 //!
 //!     let fmt = umsg::UMessageFormat::try_from(&msg, &loc)?;
-//!     let hello = ustring::UChar::try_from("Hello! Добар дан!")?;
+//!     let hello = ustring::UChar::from("Hello! Добар дан!");
 //!     let result = umsg::message_format!(
-//!       fmt,
-//!       { 43.4 => Double },
-//!       { 31337 => Integer},
-//!       { hello => String},
-//!       { 0.0 => Date }
+//!         fmt,
+//!         { 43.4 => Double },
+//!         { 31337 => Integer },
+//!         { hello => String },
+//!         { 0.0 => Date }
 //!     )?;
 //!
 //!     assert_eq!(
-//!       r"Formatted double: 43.4,
-//!         Formatted integer: 31,337,
-//!         Formatted string: Hello! Добар дан!,
-//!         Date: Thursday, January 1, 1970",
-//!       result
+//!         r"Formatted double: 43.4,
+//!           Formatted integer: 31,337,
+//!           Formatted string: Hello! Добар дан!,
+//!           Date: Thursday, January 1, 1970",
+//!         result
 //!     );
 //!     Ok(())
 //! }
 //! # fn main() -> Result<(), common::Error> {
-//! #   testfn()
+//! #     testfn()
 //! # }
 //! ```
 
 use {
-    rust_icu_common as common, rust_icu_sys as sys, rust_icu_sys::*,
+    rust_icu_common as common, rust_icu_sys::{self as sys, *},
     rust_icu_uloc as uloc, rust_icu_ustring as ustring, std::convert::TryFrom,
 };
 
@@ -182,7 +184,7 @@ impl UMessageFormat {
 /// The general usage pattern for the formatter is as follows, assuming that `formatter`
 /// is an appropriately initialized [UMessageFormat]:
 ///
-/// ``` ignore
+/// ```ignore
 /// use rust_icu_umsg as umsg;
 /// // let result = umsg::message_format!(
 /// //     formatter, [{ value => <type_assertion> }, ...]);
@@ -233,50 +235,51 @@ impl UMessageFormat {
 /// use rust_icu_common as common;
 /// use rust_icu_ustring as ustring;
 /// use rust_icu_uloc as uloc;
-/// use rust_icu_umsg::{self as umsg, message_format};
+/// use rust_icu_umsg as umsg;
 /// # use rust_icu_ucal as ucal;
 /// # use std::convert::TryFrom;
 /// #
 /// # struct TzSave(String);
+/// #
 /// # impl Drop for TzSave {
-/// #    // Restore the system time zone upon exit.
-/// #    fn drop(&mut self) {
-/// #        ucal::set_default_time_zone(&self.0);
-/// #    }
+/// #     // Restore the system time zone upon exit.
+/// #     fn drop(&mut self) {
+/// #         ucal::set_default_time_zone(&self.0);
+/// #     }
 /// # }
 ///
 /// fn testfn() -> Result<(), common::Error> {
-/// # let _ = TzSave(ucal::get_default_time_zone()?);
-/// # ucal::set_default_time_zone("Europe/Amsterdam")?;
-///   let loc = uloc::ULoc::try_from("en-US")?;
-///   let msg = ustring::UChar::try_from(
-///     r"Formatted double: {0,number,##.#},
-///       Formatted integer: {1,number,integer},
-///       Formatted string: {2},
-///       Date: {3,date,full}",
-///   )?;
+/// #   let _ = TzSave(ucal::get_default_time_zone()?);
+/// #   ucal::set_default_time_zone("Europe/Amsterdam")?;
+///     let loc = uloc::ULoc::try_from("en-US")?;
+///     let msg = ustring::UChar::from(
+///         r"Formatted double: {0,number,##.#},
+///           Formatted integer: {1,number,integer},
+///           Formatted string: {2},
+///           Date: {3,date,full}",
+///     );
 ///
-///   let fmt = umsg::UMessageFormat::try_from(&msg, &loc)?;
-///   let hello = ustring::UChar::try_from("Hello! Добар дан!")?;
-///   let result = umsg::message_format!(
-///     fmt,
-///     { 43.4 => Double },
-///     { 31337 => Integer},
-///     { hello => String},
-///     { 0.0 => Date }
-///   )?;
+///     let fmt = umsg::UMessageFormat::try_from(&msg, &loc)?;
+///     let hello = ustring::UChar::from("Hello! Добар дан!");
+///     let result = umsg::message_format!(
+///         fmt,
+///         { 43.4 => Double },
+///         { 31337 => Integer },
+///         { hello => String },
+///         { 0.0 => Date }
+///     )?;
 ///
-///   assert_eq!(
-///     r"Formatted double: 43.4,
-///       Formatted integer: 31,337,
-///       Formatted string: Hello! Добар дан!,
-///       Date: Thursday, January 1, 1970",
-///     result
-///   );
-/// Ok(())
+///     assert_eq!(
+///         r"Formatted double: 43.4,
+///           Formatted integer: 31,337,
+///           Formatted string: Hello! Добар дан!,
+///           Date: Thursday, January 1, 1970",
+///         result
+///     );
+///     Ok(())
 /// }
 /// # fn main() -> Result<(), common::Error> {
-/// #   testfn()
+/// #     testfn()
 /// # }
 /// ```
 ///
@@ -287,7 +290,7 @@ macro_rules! message_format {
     ($dest:expr) => {
         panic!("you should not format a message without parameters")
     };
-    ($dest:expr, $( {$arg:expr => $t:ident}),* ) => {
+    ($dest:expr, $({ $arg:expr => $t:ident }),*) => {
         unsafe {
             $crate::format_varargs(
                 &$dest,
@@ -387,7 +390,7 @@ pub unsafe extern "C" fn format_varargs(
         });
         common::Error::ok_or_warning(status)?;
     }
-    String::try_from(&result)
+    String::try_from(&result).map_err(|e| e.into())
 }
 
 #[cfg(test)]
@@ -417,21 +420,20 @@ mod tests {
         ucal::set_default_time_zone("Europe/Amsterdam")?;
 
         let loc = uloc::ULoc::try_from("en-US")?;
-        let msg = ustring::UChar::try_from(
+        let msg = ustring::UChar::from(
             r"Formatted double: {0,number,##.#},
               Formatted integer: {1,number,integer},
               Formatted string: {2},
               Date: {3,date,full}",
-        )?;
+        );
 
         let fmt = crate::UMessageFormat::try_from(&msg, &loc)?;
-        let hello = ustring::UChar::try_from("Hello! Добар дан!")?;
-        let value: i32 = 31337;
+        let hello = ustring::UChar::from("Hello! Добар дан!");
         let result = message_format!(
             fmt,
             { 43.4 => Double },
-            { value => Integer},
-            { hello => String},
+            { 31337 => Integer },
+            { hello => String },
             { 0.0 => Date }
         )?;
 
@@ -446,18 +448,18 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
+    #[should_panic(expected = "you should not format a message without parameters")]
     fn empty_args_in_format() {
         let _ = TzSave(ucal::get_default_time_zone().unwrap());
         ucal::set_default_time_zone("Europe/Amsterdam").unwrap();
 
         let loc = uloc::ULoc::try_from("en-US").unwrap();
-        let msg = ustring::UChar::try_from(
+        let msg = ustring::UChar::from(
             r"Formatted double: {0,number,##.#},
               Formatted integer: {1,number,integer},
               Formatted string: {2},
               Date: {3,date,full}",
-        ).unwrap();
+        );
         let _fmt = crate::UMessageFormat::try_from(&msg, &loc).unwrap();
 
         // This is not allowed!
@@ -467,7 +469,7 @@ mod tests {
     #[test]
     fn clone() -> Result<(), common::Error> {
         let loc = uloc::ULoc::try_from("en-US-u-tz-uslax")?;
-        let msg = ustring::UChar::try_from(r"Formatted double: {0,number,##.#}")?;
+        let msg = ustring::UChar::from(r"Formatted double: {0,number,##.#}");
 
         let fmt = crate::UMessageFormat::try_from(&msg, &loc)?;
         let result = message_format!(fmt.clone(), { 43.43 => Double })?;

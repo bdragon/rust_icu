@@ -165,7 +165,7 @@ impl<'a> crate::UFormattable<'a> {
     /// Implements `ufmt_getUChars`
     pub fn get_str(&self) -> Result<String, common::Error> {
         let ustr = self.get_ustring()?;
-        String::try_from(&ustr)
+        String::try_from(&ustr).map_err(|e| e.into())
     }
 
     /// Use [UFormattable::get_type] to ensure that this formattable is an array before using this

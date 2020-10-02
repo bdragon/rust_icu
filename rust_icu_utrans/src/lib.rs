@@ -129,9 +129,9 @@ impl UTransliterator {
         rules: Option<&str>,
         dir: sys::UTransDirection,
     ) -> Result<Self, common::Error> {
-        let id = ustring::UChar::try_from(id)?;
+        let id = ustring::UChar::from(id);
         let rules = match rules {
-            Some(s) => Some(ustring::UChar::try_from(s)?),
+            Some(s) => Some(ustring::UChar::from(s)),
             None => None,
         };
         Self::new_ustring(&id, rules.as_ref(), dir)
@@ -180,7 +180,7 @@ impl UTransliterator {
         let id_buf =
             unsafe { slice::from_raw_parts(rep, id_len as usize) }.to_vec();
         let id = ustring::UChar::from(id_buf);
-        String::try_from(&id)
+        String::try_from(&id).map_err(|e| e.into())
     }
 
     /// Returns the inverse of this transliterator, provided that the inverse
@@ -239,7 +239,7 @@ impl UTransliterator {
         }
         common::Error::ok_or_warning(status)?;
         let rules = ustring::UChar::from(rules);
-        String::try_from(&rules)
+        String::try_from(&rules).map_err(|e| e.into())
     }
 
     /// Apply a filter to this transliterator, causing certain characters to
@@ -254,7 +254,7 @@ impl UTransliterator {
         pattern: Option<&str>,
     ) -> Result<(), common::Error> {
         let pattern = match pattern {
-            Some(s) => Some(ustring::UChar::try_from(s)?),
+            Some(s) => Some(ustring::UChar::from(s)),
             None => None,
         };
         self.set_filter_ustring(pattern.as_ref())
@@ -282,9 +282,9 @@ impl UTransliterator {
     ///
     /// Implements `utrans_transUChars`.
     pub fn transliterate(&self, text: &str) -> Result<String, common::Error> {
-        let text = ustring::UChar::try_from(text)?;
+        let text = ustring::UChar::from(text);
         let trans_text = self.transliterate_ustring(&text)?;
-        String::try_from(&trans_text)
+        String::try_from(&trans_text).map_err(|e| e.into())
     }
 
     /// Implements `utrans_transUChars`.
@@ -349,7 +349,7 @@ impl UTransliterator {
     ///
     /// Implements `utrans_unregisterID`.
     pub fn unregister(id: &str) -> Result<(), common::Error> {
-        let id = ustring::UChar::try_from(id)?;
+        let id = ustring::UChar::from(id);
         unsafe {
             versioned_function!(utrans_unregisterID)(
                 id.as_c_ptr(),

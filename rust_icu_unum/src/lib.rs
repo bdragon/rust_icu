@@ -117,7 +117,7 @@ impl UNumberFormat {
         style: sys::UNumberFormatStyle,
         locale: &uloc::ULoc,
     ) -> Result<UNumberFormat, common::Error> {
-        let rule = ustring::UChar::try_from("")?;
+        let rule = ustring::UChar::from("");
         assert_ne!(style, sys::UNumberFormatStyle::UNUM_PATTERN_RULEBASED);
         assert_ne!(style, sys::UNumberFormatStyle::UNUM_PATTERN_DECIMAL);
         UNumberFormat::try_new_style_pattern_ustring(style, &rule, locale)
@@ -217,7 +217,7 @@ impl UNumberFormat {
     /// Implements `unum_formatDecimal`. Since 0.3.1.
     pub fn format_decimal(&self, decimal: &str) -> Result<String, common::Error> {
         let result = self.format_decimal_ustring(decimal)?;
-        String::try_from(&result)
+        String::try_from(&result).map_err(|e| e.into())
     }
 
     /// Implements `unum_formatDecimal`. Since 0.3.1.
@@ -251,9 +251,9 @@ impl UNumberFormat {
         number: f64,
         currency: &str,
     ) -> Result<String, common::Error> {
-        let currency = ustring::UChar::try_from(currency)?;
+        let currency = ustring::UChar::from(currency);
         let result = self.format_double_currency_ustring(number, &currency)?;
-        String::try_from(&result)
+        String::try_from(&result).map_err(|e| e.into())
     }
 
     /// Implements `unum_formatDoubleCurrency`. Since 0.3.1
@@ -299,7 +299,7 @@ impl UNumberFormat {
         text: &str,
         parse_position: Option<i32>,
     ) -> Result<uformattable::UFormattable<'a>, common::Error> {
-        let ustr = ustring::UChar::try_from(text)?;
+        let ustr = ustring::UChar::from(text);
         self.parse_to_formattable_ustring(&ustr, parse_position)
     }
 
@@ -333,7 +333,7 @@ impl UNumberFormat {
         fmt: &uformattable::UFormattable<'a>,
     ) -> Result<String, common::Error> {
         let result = self.format_formattable_ustring(fmt)?;
-        String::try_from(&result)
+        String::try_from(&result).map_err(|e| e.into())
     }
 
     /// Implements `unum_formatUFormattable`. Since 0.3.1.
@@ -372,7 +372,7 @@ impl UNumberFormat {
         tag: sys::UNumberFormatTextAttribute,
     ) -> Result<String, common::Error> {
         let result = self.get_text_attribute_ustring(tag)?;
-        String::try_from(&result)
+        String::try_from(&result).map_err(|e| e.into())
     }
 
     /// Implements `unum_getTextAttribute`. Since 0.3.1.
@@ -403,7 +403,7 @@ impl UNumberFormat {
         tag: sys::UNumberFormatTextAttribute,
         new_value: &str,
     ) -> Result<(), common::Error> {
-        let new_value = ustring::UChar::try_from(new_value)?;
+        let new_value = ustring::UChar::from(new_value);
         self.set_text_attribute_ustring(tag, &new_value)?;
         Ok(())
     }
@@ -432,7 +432,7 @@ impl UNumberFormat {
     /// Implements `unum_toPattern`. Since 0.3.1.
     pub fn get_pattern(&self, is_localized: bool) -> Result<String, common::Error> {
         let result = self.get_pattern_ustring(is_localized)?;
-        String::try_from(&result)
+        String::try_from(&result).map_err(|e| e.into())
     }
 
     /// Implements `unum_toPattern`. Since 0.3.1.
@@ -455,7 +455,7 @@ impl UNumberFormat {
     /// Implements `unum_getSymbol`. Since 0.3.1.
     pub fn get_symbol(&self, symbol: sys::UNumberFormatSymbol) -> Result<String, common::Error> {
         let result = self.get_symbol_ustring(symbol)?;
-        String::try_from(&result)
+        String::try_from(&result).map_err(|e| e.into())
     }
 
     /// Implements `unum_getSymbol`. Since 0.3.1.
@@ -486,7 +486,7 @@ impl UNumberFormat {
         symbol: sys::UNumberFormatSymbol,
         value: &str,
     ) -> Result<(), common::Error> {
-        let value = ustring::UChar::try_from(value)?;
+        let value = ustring::UChar::from(value);
         self.set_symbol_ustring(symbol, &value)
     }
 
@@ -716,7 +716,7 @@ mod tests {
         }];
         for test in tests {
             let locale = uloc::ULoc::try_from(test.locale).expect("locale exists");
-            let pattern = ustring::UChar::try_from(test.pattern).expect("pattern is set");
+            let pattern = ustring::UChar::from(test.pattern);
             let fmt = crate::UNumberFormat::try_new_decimal_pattern_ustring(&pattern, &locale)
                 .expect("formatter");
 
@@ -748,7 +748,7 @@ mod tests {
         }];
         for test in tests {
             let locale = uloc::ULoc::try_from(test.locale).expect("locale exists");
-            let pattern = ustring::UChar::try_from(test.rule).expect("pattern is set");
+            let pattern = ustring::UChar::from(test.rule);
             let fmt = crate::UNumberFormat::try_new_decimal_rule_based_ustring(&pattern, &locale)
                 .expect("formatter");
 

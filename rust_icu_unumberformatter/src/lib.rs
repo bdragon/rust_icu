@@ -129,7 +129,7 @@ impl UNumberFormatter {
     /// [skel]: https://github.com/unicode-org/icu/blob/master/docs/userguide/format_parse/numbers/skeletons.md
     pub fn try_new(skeleton: &str, locale: &str) -> Result<UNumberFormatter, common::Error> {
         let locale = uloc::ULoc::try_from(locale)?;
-        let skeleton = ustring::UChar::try_from(skeleton)?;
+        let skeleton = ustring::UChar::from(skeleton);
         UNumberFormatter::try_new_ustring(&skeleton, &locale)
     }
 
@@ -248,7 +248,7 @@ impl TryInto<String> for UFormattedNumber {
     /// Implements `unumf_resultToString`.  Since 0.3.1.
     fn try_into(self) -> Result<String, common::Error> {
         let result: ustring::UChar = self.try_into()?;
-        String::try_from(&result)
+        String::try_from(&result).map_err(|e| e.into())
     }
 }
 

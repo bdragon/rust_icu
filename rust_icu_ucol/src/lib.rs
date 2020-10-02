@@ -44,8 +44,8 @@
 //! let collator = ucol::UCollator::try_from("sr-Latn").expect("collator");
 //! let mut mixed_up = vec!["d", "dž", "đ", "a", "b", "c", "č", "ć"];
 //! mixed_up.sort_by(|a, b| {
-//!    let first = ustring::UChar::try_from(*a).expect("first");
-//!    let second = ustring::UChar::try_from(*b).expect("second");
+//!    let first = ustring::UChar::from(*a);
+//!    let second = ustring::UChar::from(*b);
 //!    collator.strcoll(&first, &second)
 //! });
 //! let alphabet = vec!["a", "b", "c", "č", "ć", "d", "dž", "đ"];
@@ -254,8 +254,8 @@ mod tests {
         let collator = crate::UCollator::try_from("sr-Latn")?;
         let mut mixed_up = vec!["d", "dž", "đ", "a", "b", "c", "č", "ć"];
         mixed_up.sort_by(|a, b| {
-            let first = ustring::UChar::try_from(*a).expect("first");
-            let second = ustring::UChar::try_from(*b).expect("second");
+            let first = ustring::UChar::from(*a);
+            let second = ustring::UChar::from(*b);
             collator.strcoll(&first, &second)
         });
 

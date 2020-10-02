@@ -83,7 +83,7 @@ impl UCalendar {
         locale: &str,
         cal_type: sys::UCalendarType,
     ) -> Result<UCalendar, common::Error> {
-        let zone_id_uchar = ustring::UChar::try_from(zone_id)?;
+        let zone_id_uchar = ustring::UChar::from(zone_id);
         Self::new_from_uchar(&zone_id_uchar, locale, cal_type)
     }
     /// Returns this UCalendar's internal C representation.  Use only for interfacing with the C
@@ -206,7 +206,7 @@ impl UCalendar {
 /// Implements `ucal_setDefaultTimeZone`
 pub fn set_default_time_zone(zone_id: &str) -> Result<(), common::Error> {
     let mut status = common::Error::OK_CODE;
-    let mut zone_id_uchar = ustring::UChar::try_from(zone_id)?;
+    let mut zone_id_uchar = ustring::UChar::from(zone_id);
     zone_id_uchar.make_z();
     // Requires zone_id_uchar to be a valid pointer until the function returns.
     unsafe {
@@ -243,7 +243,7 @@ pub fn get_default_time_zone() -> Result<String, common::Error> {
     };
     common::Error::ok_or_warning(status)?;
     trace!("result: {:?}", uchar);
-    String::try_from(&uchar)
+    String::try_from(&uchar).map_err(|e| e.into())
 }
 
 /// Implements `ucal_getTZDataVersion`
